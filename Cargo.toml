@@ -1,0 +1,30 @@
+[package]
+name = "doraemon_server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = { version = "0.11", features = ["json", "stream"] }
+# tokio:一个事件驱动的非阻塞I/O平台，用于编写异步I/O支持的应用程序。
+tokio = { version = "1.43.0", features = [
+    "full",
+] } 
+scraper = "0.13.0"
+url = "2.4.0"
+futures = "0.3.0"
+# sqlx: 数据库链接
+sqlx = { version = "v0.8.3", features = [
+    "mysql",
+    "runtime-tokio-native-tls",
+] } 
+"dotenv" = "v0.15.0"
+serde = "v1.0.218"
+
+[database.prod]
+url = "mysql://prod_user@prod_host/prod_db"
+max_connections = 50
+min_connections = 10
+
+[database.staging]
+url = "mysql://staging_user@staging_host/staging_db"
+max_connections = 20
