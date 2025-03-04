@@ -14,6 +14,9 @@ pub enum DatabaseError {
     
     #[error("配置加载失败: {0}")]
     ConfigError(String),
+
+    #[error("数据库链接初始化失败")]
+    PoolInitFailed,
 }
 
 impl From<SqlxError> for DatabaseError {

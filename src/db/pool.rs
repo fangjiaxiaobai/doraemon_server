@@ -1,7 +1,12 @@
-use sqlx::{mysql::{MySqlPool, MySqlPoolOptions}, Error as SqlxError};
+use sqlx::{
+    Error as SqlxError,
+    mysql::{MySqlPool, MySqlPoolOptions},
+};
 use std::time::Duration;
+use std::collections::HashMap;
+use crate::db::DatabaseConfig;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct DbPool {
     inner: MySqlPool,
 }
@@ -12,7 +17,7 @@ impl DbPool {
         url: &str,
         max_connections: u32,
         min_connections: u32,
-        acquire_timeout: Duration
+        acquire_timeout: Duration,
     ) -> Result<Self, SqlxError> {
         let pool = MySqlPoolOptions::new()
             .max_connections(max_connections)
@@ -22,6 +27,17 @@ impl DbPool {
             .test_before_acquire(true)
             .connect(url)
             .await?;
+
+        // 定期检查连接健康
+        // tokio::spawn(async move {
+        //     loop {
+        //         let is_healthy = health_check().await;
+        //         if !is_healthy {
+        //             // 触发报警或重启逻辑
+        //         }
+        //         tokio::time::sleep(Duration::from_secs(60)).await;
+        //     }
+        // });
 
         Ok(Self { inner: pool })
     }
@@ -49,18 +65,19 @@ impl DbPool {
         self.inner.num_idle()
     }
 
+    pub async fn reload_config(&mut self, config: &DatabaseConfig) -> Result<(), SqlxError> {
+        let new_pool = DbPool::new(
+            &config.url,
+            config.max_connections,
+            config.min_connections,
+            Duration::from_secs(config.acquire_timeout_secs),
+        )
+        .await?;
 
-pub async fn reload_config(&mut self, config: &DatabaseConfig) -> Result<(), SqlxError> {
-    let new_pool = DbPool::new(
-        &config.url,
-        config.max_connections,
-        config.min_connections,
-        Duration::from_secs(config.acquire_timeout_secs)
-    ).await?;
-    
-    self.inner = new_pool.inner;
-    Ok(())
-}
+        // todo reload config.
+        // self.inner = new_pool.inner;
+        Ok(())
+    }
 }
 
 // 实现Clone trait保证安全克隆
@@ -80,11 +97,10 @@ impl Drop for DbPool {
     }
 }
 
-
 // 多租户支持
 struct MultiTenantPool {
     pools: HashMap<String, DbPool>,
-    config: DatabaseConfig
+    config: DatabaseConfig,
 }
 
 impl MultiTenantPool {
@@ -94,8 +110,10 @@ impl MultiTenantPool {
                 &format!("mysql://{}_{}", tenant_id, self.config.url),
                 self.config.max_connections,
                 self.config.min_connections,
-                Duration::from_secs(self.config.acquire_timeout_secs)
-            ).await.unwrap();
+                Duration::from_secs(self.config.acquire_timeout_secs),
+            )
+            .await
+            .unwrap();
             self.pools.insert(tenant_id.into(), pool);
         }
         self.pools.get(tenant_id).unwrap()

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO dor_vod_col (vod_col_name, type_id) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d2ae386b2f3cd6b64e0e3bdaebddd4fbf77235068b65367f6e034f60e279d96b"
+}

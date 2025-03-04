@@ -1,7 +1,7 @@
 pub mod pool;
 pub mod config;
 pub mod error;
-pub mod query;
+pub mod models;
 
 use crate::db::config::DatabaseConfig;
 use crate::db::error::DatabaseError;
@@ -16,7 +16,7 @@ impl Database {
         let (url, max, min, timeout) = config.to_pool_config();
         let pool = DbPool::new(&url, max, min, timeout)
             .await
-            .map_err(DatabaseError::PoolInitFailed)?;
+            .map_err(|_e| DatabaseError::PoolInitFailed)?;
         
         Ok(Self { pool })
     }

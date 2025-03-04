@@ -12,7 +12,7 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            url: "mysql://root:@localhost:3306/test".into(),
+            url: "mysql://doraemon:admin.123@localhost:3306/doraemon".into(),
             max_connections: 10,
             min_connections: 2,
             acquire_timeout_secs: 30,
